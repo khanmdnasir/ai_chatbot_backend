@@ -2,14 +2,16 @@
 
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.conf import settings
 from openai import OpenAI
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 client = OpenAI(
     # defaults to os.environ.get("OPENAI_API_KEY")
-    api_key=settings.OPENAI_API_KEY,
+    api_key=os.environ.get('OPENAI_API_KEY'),
 )
 
 
