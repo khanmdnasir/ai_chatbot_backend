@@ -1,0 +1,9 @@
+version: '3.7'
+services:
+  backend:
+    build:
+      context: .
+    container_name: chatbot_backend
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - 8000
