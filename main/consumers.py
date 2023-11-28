@@ -1,6 +1,7 @@
 # chat/consumers.py
 
 import json
+import asyncio
 from channels.generic.websocket import AsyncWebsocketConsumer
 from openai import OpenAI
 import os
@@ -15,8 +16,6 @@ client = OpenAI(
 )
 
 
-
-
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
@@ -26,21 +25,40 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        print(text_data_json)
+ 
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user","content":"hi"},
+                {"role": "assistant", "content":"what's up"},
                 {"role": "user", "content": "Hello, how are you?"},
                 {"role": "assistant",
                     "content": "I'm doing well, thank you. How can I assist you today?"},
-                text_data_json
+                {"role": "user", "content": text_data_json['message']}
             ],
+            temperature=1,
+            max_tokens=256,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stream=True
         )
-        
-        messageToSend = response.choices[0].message.content.strip()
-        print('message to send',messageToSend)
+
+        stream = 'start'
+        for r in response:
+            await asyncio.sleep(0.5)
+            messageToSend = r.choices[0].delta.content
+            print('message to send', {
+                "stream": stream,
+                "message": messageToSend,
+            })
+            
+            await self.send(text_data=json.dumps({
+                "stream": stream,
+                "message": messageToSend,
+            }))
+            stream = True
+            
         await self.send(text_data=json.dumps({
-            "role": "assistant",
-            "content": messageToSend,       
+            "stream": False,
         }))
